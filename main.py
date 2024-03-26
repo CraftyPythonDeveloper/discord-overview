@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from sys import platform
 import subprocess
 from datetime import datetime, timedelta, timezone
 
@@ -96,14 +97,14 @@ def get_messages(channel_id, before=60, limit=None):
             last_timestamp = message["timestamp"]
             last_message_id = message["id"]
             temp_dict.append({"time": message["timestamp"], "content": message["content"]})
+            progress_bar.set_description(f'Retrieved {len(all_messages)} messages')
             progress_bar.update()
 
         timestamp_dt = datetime.fromisoformat(last_timestamp)
         if (before and timestamp_dt < diff) or (limit and len(all_messages) > limit):
             logger.debug(f"Break condition meet {limit and len(all_messages) > limit} -- {before and timestamp_dt < diff}")
             break
-        progress_bar.set_description(f'Retrieved {len(all_messages)} messages')
-        progress_bar.update()
+    progress_bar.close()
     logger.debug(f"Current timestamp {ctime} and last timestamp {last_timestamp} and diff is {diff}")
     return all_messages
 
@@ -169,7 +170,9 @@ if __name__ == "__main__":
     with open(os.path.join(WRK_DIR, "output.txt"), "w", encoding="utf-8") as fp:
         fp.write("\n".join(overviews))
 
-    subprocess.run(["notepad", os.path.join(WRK_DIR, "output.txt")])
+    # open the output.txt in notepad only if os is windows.
+    if platform == "win32":
+        subprocess.run(["notepad", os.path.join(WRK_DIR, "output.txt")])
 
     logger.info("Script execution complete successfully and results saved to output.txt file.")
     input("Press any key to exit...")
